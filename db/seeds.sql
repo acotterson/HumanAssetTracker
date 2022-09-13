@@ -1,9 +1,13 @@
+-- To avoid reference errors before referenced items are populated
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- seed our tables
-INSERT INTO department (name)
+INSERT INTO department (`name`)
 VALUES ("Brick Making"),
 ("Installation"),
 ("Moral"),
-("Executive Team");
+("Executive Team")
+;
 
 INSERT INTO `role` (title, salary, department_id)
 VALUES ("Mud Dancer", 5.00, 1),
@@ -21,7 +25,8 @@ VALUES ("Mud Dancer", 5.00, 1),
 ("Chief Architect", 1100000.00, 4),
 ("Corruption Lead Investigator", 900000.00, 4),
 ("Board Member", 700000.00, 4),
-("CEO", 1000000000.00, 4);
+("CEO", 1000000000.00, 4)
+;
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES ("Judah", "ben Jonah", 1, 13),
@@ -36,15 +41,19 @@ VALUES ("Judah", "ben Jonah", 1, 13),
 ("Jeremiah", "ben Isaachar", 8, 14),
 ("Joshua", "ben Nun", 6, 14),
 ("Dathan", "Weasel Eyes", 11, 15),
-("The Muscle", "Number 1", 10, 15),
-("The Muscle", "Number 2", 10, 15),
+("Taskmaster", "Number 1", 2, 15),
+("Taskmaster", "Number 2", 10, 15),
 ("Baka", "Master Butcher", 12, 16),
 ("Moses", "Prince of Egypt", 13, 19),
 ("Nefertari", "Princess of Egypt", 15, 19),
-("Ramses", "Prince of Egypt", 14, 19),
-("Seti I", "The Morning and the Evening Star", 16, NULL),
+("Rameses", "Prince of Egypt", 14, 19),
+("Seti I", "Morning and Evening Star", 16, NULL),
 ("Aaron", "ben Amram", 3, 13),
 ("Miriam", "ben Amram", 2, 13),
 ("Yochabel", "ben Levi", 7, 14),
 ("Judah", "ben Hur", 1, 13),
-("Lilia", "ben Jonah", 9, 15);
+("Lilia", "ben Jonah", 9, 15)
+;
+
+-- Referencing should work now
+SET FOREIGN_KEY_CHECKS = 1;
