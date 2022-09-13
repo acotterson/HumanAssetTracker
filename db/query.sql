@@ -1,0 +1,1 @@
+SELECT department.name AS department, title
