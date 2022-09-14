@@ -1,0 +1,33 @@
+{
+  "name": "hatracker",
+  "version": "1.0.0",
+  "description": "Track employees at the company",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acotterson/HumanAssetTracker.git"
+  },
+  "keywords": [
+    "employee",
+    "company",
+    "salary",
+    "cost",
+    "manager",
+    "structure"
+  ],
+  "author": "Alec Otterson",
+  "license": "MIT",
+  "dependencies": {
+    "inquirer": "^8.2.4",
+    "jshint": "^2.12.0",
+    "mysql2": "^2.2.5"
+  },
+  "bugs": {
+    "url": "https://github.com/acotterson/HumanAssetTracker/issues"
+  },
+  "homepage": "https://github.com/acotterson/HumanAssetTracker#readme"
+}
