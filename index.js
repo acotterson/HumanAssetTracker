@@ -83,6 +83,13 @@ const questions = [
   },
 ];
 
+// Display employees
+function employeeDisplay {
+  // todo query
+  main();
+}
+
+
 // Accept user requests at main menu
 function main() {
   inquirer.prompt(questions[0]).then((data) => {
