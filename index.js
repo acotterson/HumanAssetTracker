@@ -34,9 +34,7 @@ const mMenu = [
   "View Department Salary Budget Use",
   "Quit",
 ];
-let deps = [];
-let roles = [];
-let emps = [];
+const empDispOptions = ["By ID", "By Manager", "By Department"];
 
 // User choice question
 const questions = [
@@ -57,15 +55,15 @@ const questions = [
     message: "What is the name of the role?",
   },
   {
-    type: "input",
+    type: "number",
     name: "roleSalary",
     message: "What is the salary of the role?",
   },
   {
     type: "list",
-    message: "Which department does the role belong to?",
+    message: "",
     name: "depChoice",
-    choices: deps,
+    choices: [],
   },
   {
     type: "input",
@@ -81,25 +79,31 @@ const questions = [
     type: "list",
     name: "roleRole",
     message: "What is the employee's role?",
-    choices: roles,
+    choices: [],
   },
   {
     type: "list",
     message: "Who is the employees's manager?",
     name: "manChoice",
-    choices: [...emps, "None"],
+    choices: [],
   },
   {
     type: "list",
     message: "Which employee's role do you want to update?",
     name: "empChoice",
-    choices: emps,
+    choices: [],
   },
   {
     type: "list",
     message: "Which role do you want to assign to the selected employee?",
     name: "empChoice",
-    choices: roles,
+    choices: [],
+  },
+  {
+    type: "list",
+    message: "How do you want to arrange employees?",
+    name: "empDispChoice",
+    choices: empDispOptions,
   },
 ];
 
@@ -125,7 +129,7 @@ ORDER BY e.id;`;
     })
     .catch((err) => {
       console.log(err);
-    })
+    });
 }
 
 // Add new employee
@@ -142,27 +146,63 @@ function roleDisplay() {
   const sql = `SELECT r.id, r.title, d.name AS department, r.salary
   FROM role r
   LEFT JOIN department d ON r.department_id = d.id;`;
-db.promise()
-  .query(sql)
-  .then(([row, fields]) => {
-    console.table(row);
-    main();
-  })
-  .catch((err) => {
-    console.log(err);
-  })
+  db.promise()
+    .query(sql)
+    .then(([row, fields]) => {
+      console.table(row);
+      main();
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 }
 
 // Add new role
-function roleAdd() {}
+function roleAdd() {
+  const params = [];
+  inquirer.prompt(questions[2]).then((nameData) => {
+    console.log(nameData.roleName);
+    params.push(nameData.roleName);
+    inquirer.prompt(questions[3]).then((salData) => {
+      console.log(salData.roleSalary);
+      params.push(salData.roleSalary);
+      const sql1 = `SELECT * FROM department`;
+      db.promise()
+        .query(sql1)
+        .then(([row1, fields]) => {
+          console.log(row1);
+          questions[4].choices = row1.map((x) => x.name);
+          questions[4].message = "Which department does the role belong to?";
+          inquirer.prompt(questions[4]).then((depData) => {
+            const sql2 = `INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`;
+            params.push((row1.filter(el => el.name === depData.depChoice))[0].id);
+            db.promise()
+              .query(sql2, params)
+              .then(([row2, fields]) => {
+                if (!row2.affectedRows) {
+                  console.log("Role not added.");
+                } else {
+                  console.log(nameData.roleName + " added to the database.");
+                }
+                main();
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
+  });
+}
 
 // Update role
 function roleUpdate() {}
 
 // Delete role
 function roleDelete() {}
-
-
 
 // Display departments
 function departmentDisplay() {
@@ -175,47 +215,116 @@ function departmentDisplay() {
     })
     .catch((err) => {
       console.log(err);
-    })
+    });
 }
 
 // Add new department
-function departmentAdd() {}
+function departmentAdd() {
+  inquirer.prompt(questions[1]).then((data) => {
+    console.log(data.depName);
+    const sql = `INSERT INTO department (name) VALUES (?)`;
+    const params = data.depName;
+    db.promise()
+      .query(sql, params)
+      .then(([row, fields]) => {
+        if (!row.affectedRows) {
+          console.log("Department not added.");
+        } else {
+          console.log(data.depName + " added to the database.");
+        }
+        main();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  });
+}
 
 // Delete department
-function departmentDelete() {}
+function departmentDelete() {
+  const sql = `SELECT d.name AS department FROM department d`;
+  db.promise()
+    .query(sql)
+    .then(([row, fields]) => {
+      let deps = row.map((x) => x.department);
+      console.log(deps);
+      console.log(questions[4]);
+      questions[4].choices = deps;
+      questions[4].message = "Which department do you want to delete?";
+      console.log(questions[4]);
+      inquirer.prompt(questions[4]).then((data) => {
+        console.log(data.depChoice);
+        const sql = `DELETE FROM department WHERE name = ?`;
+        const params = data.depChoice;
+        db.promise()
+          .query(sql, params)
+          .then(([row, fields]) => {
+            if (!row.affectedRows) {
+              console.log("Department not found");
+            } else {
+              console.log(data.depChoice + " deleted from the database.");
+            }
+            main();
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
 
 // Display employees by manager
 function employeeManDisplay() {
-  // SELECT e.id,
-  //   CONCAT(m.first_name, ' ', m.last_name) AS 'manager',
-  //   e.first_name,
-  //   e.last_name,
-  //   r.title,
-  //   d.name AS department,
-  //   r.salary
-  // FROM employee e
-  //   LEFT JOIN `role` r ON e.role_id = r.id
-  //   LEFT JOIN department d ON r.department_id = d.id
-  //   LEFT JOIN employee m ON m.id = e.manager_id
-  // ORDER BY m.id;
-  main();
+  const sql = `SELECT e.id,
+  CONCAT(m.first_name, ' ', m.last_name) AS 'manager',
+  e.first_name,
+  e.last_name,
+  r.title,
+  d.name AS department,
+  r.salary
+FROM employee e
+  LEFT JOIN role r ON e.role_id = r.id
+  LEFT JOIN department d ON r.department_id = d.id
+  LEFT JOIN employee m ON m.id = e.manager_id
+ORDER BY m.id;`;
+  db.promise()
+    .query(sql)
+    .then(([row, fields]) => {
+      console.table(row);
+      main();
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 }
 
 // Display employees by department
 function employeeDepDisplay() {
-  //   SELECT e.id,
-  //     d.name AS department,
-  //     CONCAT(m.first_name, ' ', m.last_name) AS 'manager',
-  //     e.first_name,
-  //     e.last_name,
-  //     r.title,
-  //     r.salary
-  // FROM employee e
-  //     LEFT JOIN `role` r ON e.role_id = r.id
-  //     LEFT JOIN department d ON r.department_id = d.id
-  //     LEFT JOIN employee m ON m.id = e.manager_id
-  // ORDER BY d.id;
-  main();
+  const sql = `
+  SELECT e.id,
+    d.name AS department,
+    CONCAT(m.first_name, ' ', m.last_name) AS 'manager',
+    e.first_name,
+    e.last_name,
+    r.title,
+    r.salary
+FROM employee e
+    LEFT JOIN role r ON e.role_id = r.id
+    LEFT JOIN department d ON r.department_id = d.id
+    LEFT JOIN employee m ON m.id = e.manager_id
+ORDER BY d.id;`;
+  db.promise()
+    .query(sql)
+    .then(([row, fields]) => {
+      console.table(row);
+      main();
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 }
 
 // Display department employee budget use
@@ -233,7 +342,27 @@ function budgetDisplay() {
     })
     .catch((err) => {
       console.log(err);
-    })
+    });
+}
+
+function empDisplaySelect() {
+  inquirer.prompt(questions[11]).then((data) => {
+    console.log(data.empDispChoice);
+    switch (data.empDispChoice) {
+      case "By ID":
+        employeeDisplay();
+        break;
+      case "By Manager":
+        employeeManDisplay();
+        break;
+      case "By Department":
+        employeeDepDisplay();
+        break;
+      default:
+        employeeDisplay();
+        break;
+    }
+  });
 }
 
 // Accept user requests at main menu
@@ -242,7 +371,7 @@ function main() {
     console.log(data.mMenuChoice);
     switch (data.mMenuChoice) {
       case "View All Employees":
-        employeeDisplay();
+        empDisplaySelect();
         break;
       case "Add Employee":
         employeeAdd();
