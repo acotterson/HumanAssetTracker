@@ -241,24 +241,24 @@ function roleUpdate() {}
 
 // Delete role
 function roleDelete() {
-    // get list of available departments
-    const sql = `SELECT d.name AS department FROM department d`;
+    // get list of available roles
+    const sql = `SELECT r.id, r.title FROM role r`;
     db.promise()
       .query(sql)
       .then(([row, fields]) => {
-        // modify question based on available departments and to indicate deletion
-        questions[4].choices = row.map((x) => x.department);
-        questions[4].message = "Which department do you want to delete?";
-        // ask which department to delete
+        // modify question based on available roles and to indicate deletion
+        questions[4].choices = row.map((x) => x.title);
+        questions[4].message = "Which role do you want to delete?";
+        // ask which role to delete
         inquirer.prompt(questions[4]).then((data) => {
-          // use query to delete selected department using name selected
-          const sql = `DELETE FROM department WHERE name = ?`;
-          const params = data.choice;
+          // use query to delete selected role using title selected
+          const sql = `DELETE FROM role WHERE id = ?`;
+          const params = (row.filter(el => el.title === data.choice))[0].id;
           db.promise()
             .query(sql, params)
             .then(([row, fields]) => {
               if (!row.affectedRows) {
-                console.log("Department not found");
+                console.log("Role not found");
               } else {
                 console.log(data.choice + " deleted from the database.");
               }
