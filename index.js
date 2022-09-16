@@ -77,30 +77,6 @@ const questions = [
   },
   {
     type: "list",
-    name: "roleRole",
-    message: "What is the employee's role?",
-    choices: [],
-  },
-  {
-    type: "list",
-    message: "Who is the employees's manager?",
-    name: "manChoice",
-    choices: [],
-  },
-  {
-    type: "list",
-    message: "Which employee's role do you want to update?",
-    name: "empChoice",
-    choices: [],
-  },
-  {
-    type: "list",
-    message: "Which role do you want to assign to the selected employee?",
-    name: "empChoice",
-    choices: [],
-  },
-  {
-    type: "list",
     message: "How do you want to arrange employees?",
     name: "empDispChoice",
     choices: empDispOptions,
@@ -133,44 +109,109 @@ ORDER BY e.id;`;
 }
 
 // Add new employee
-function employeeAdd() {}
+function employeeAdd() {
+  const params = [];
+  // get first name of employee
+  inquirer.prompt(questions[5]).then((fNameData) => {
+    params.push(fNameData.empFName);
+    // get last name of employee
+    inquirer.prompt(questions[6]).then((lNameData) => {
+      params.push(lNameData.empLName);
+      // query db to get role options
+      const sql1 = `SELECT r.id, r.title FROM role r`;
+      db.promise()
+        .query(sql1)
+        .then(([row1, fields]) => {
+          // modify question based on available roles and to ask the correct question
+          questions[4].choices = row1.map((x) => x.title);
+          questions[4].message = "What is the employee's role?";
+          // get role of employee
+          inquirer.prompt(questions[4]).then((roleData) => {
+            // match department name to department id from last query
+            params.push(
+              row1.filter((el) => el.title === roleData.choice)[0].id
+            );
+            // query db to get manager options
+            const sql2 = `SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) as name FROM employee e`;
+            db.promise()
+              .query(sql2)
+              .then(([row2, fields]) => {
+                // modify question based on available managers and to ask the correct question
+                questions[4].choices = row2.map((x) => x.name);
+                questions[4].message = "Who is the employee's manager?";
+                // get manager of employee
+                inquirer.prompt(questions[4]).then((manData) => {
+                  const sql3 = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
+                  // match manager name to manager id from last query
+                  params.push(
+                    row2.filter((el) => el.name === manData.choice)[0].id
+                  );
+                  // add the new employee
+                  db.promise()
+                    .query(sql3, params)
+                    .then(([row2, fields]) => {
+                      if (!row2.affectedRows) {
+                        console.log("Employee not added.");
+                      } else {
+                        console.log(
+                          params[0] + ' ' + params[1] + " added to the database."
+                        );
+                      }
+                      main();
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                    });
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
+  });
+}
 
 // Update employee
 function employeeUpdate() {}
 
 // Delete employee
 function employeeDelete() {
-    // get list of available employees
-    const sql = `SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) as name FROM employee e`;
-    db.promise()
-      .query(sql)
-      .then(([row, fields]) => {
-        // modify question based on available employees and to indicate deletion
-        questions[4].choices = row.map((x) => x.name);
-        questions[4].message = "Which employee do you want to delete?";
-        // ask which employee to delete
-        inquirer.prompt(questions[4]).then((data) => {
-          // use query to delete selected employee using name selected
-          const sql = `DELETE FROM employee WHERE id = ?`;
-          const params = (row.filter(el => el.name === data.choice))[0].id;
-          db.promise()
-            .query(sql, params)
-            .then(([row, fields]) => {
-              if (!row.affectedRows) {
-                console.log("Employee not found");
-              } else {
-                console.log(data.choice + " deleted from the database.");
-              }
-              main();
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-        });
-      })
-      .catch((err) => {
-        console.log(err);
+  // get list of available employees
+  const sql = `SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) as name FROM employee e`;
+  db.promise()
+    .query(sql)
+    .then(([row, fields]) => {
+      // modify question based on available employees and to indicate deletion
+      questions[4].choices = row.map((x) => x.name);
+      questions[4].message = "Which employee do you want to delete?";
+      // ask which employee to delete
+      inquirer.prompt(questions[4]).then((data) => {
+        // use query to delete selected employee using name selected
+        const sql = `DELETE FROM employee WHERE id = ?`;
+        const params = row.filter((el) => el.name === data.choice)[0].id;
+        db.promise()
+          .query(sql, params)
+          .then(([row, fields]) => {
+            if (!row.affectedRows) {
+              console.log("Employee not found");
+            } else {
+              console.log(data.choice + " deleted from the database.");
+            }
+            main();
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 }
 
 // Display roles
@@ -194,11 +235,9 @@ function roleAdd() {
   const params = [];
   // get name of role
   inquirer.prompt(questions[2]).then((nameData) => {
-    console.log(nameData.roleName);
     params.push(nameData.roleName);
     // get salary of role
     inquirer.prompt(questions[3]).then((salData) => {
-      console.log(salData.roleSalary);
       params.push(salData.roleSalary);
       // query db to get department options
       const sql1 = `SELECT * FROM department`;
@@ -212,7 +251,7 @@ function roleAdd() {
           inquirer.prompt(questions[4]).then((depData) => {
             const sql2 = `INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`;
             // match department name to department id from last query
-            params.push((row1.filter(el => el.name === depData.choice))[0].id);
+            params.push(row1.filter((el) => el.name === depData.choice)[0].id);
             // add the new role
             db.promise()
               .query(sql2, params)
@@ -241,37 +280,37 @@ function roleUpdate() {}
 
 // Delete role
 function roleDelete() {
-    // get list of available roles
-    const sql = `SELECT r.id, r.title FROM role r`;
-    db.promise()
-      .query(sql)
-      .then(([row, fields]) => {
-        // modify question based on available roles and to indicate deletion
-        questions[4].choices = row.map((x) => x.title);
-        questions[4].message = "Which role do you want to delete?";
-        // ask which role to delete
-        inquirer.prompt(questions[4]).then((data) => {
-          // use query to delete selected role using title selected
-          const sql = `DELETE FROM role WHERE id = ?`;
-          const params = (row.filter(el => el.title === data.choice))[0].id;
-          db.promise()
-            .query(sql, params)
-            .then(([row, fields]) => {
-              if (!row.affectedRows) {
-                console.log("Role not found");
-              } else {
-                console.log(data.choice + " deleted from the database.");
-              }
-              main();
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-        });
-      })
-      .catch((err) => {
-        console.log(err);
+  // get list of available roles
+  const sql = `SELECT r.id, r.title FROM role r`;
+  db.promise()
+    .query(sql)
+    .then(([row, fields]) => {
+      // modify question based on available roles and to indicate deletion
+      questions[4].choices = row.map((x) => x.title);
+      questions[4].message = "Which role do you want to delete?";
+      // ask which role to delete
+      inquirer.prompt(questions[4]).then((data) => {
+        // use query to delete selected role using title selected
+        const sql = `DELETE FROM role WHERE id = ?`;
+        const params = row.filter((el) => el.title === data.choice)[0].id;
+        db.promise()
+          .query(sql, params)
+          .then(([row, fields]) => {
+            if (!row.affectedRows) {
+              console.log("Role not found");
+            } else {
+              console.log(data.choice + " deleted from the database.");
+            }
+            main();
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 }
 
 // Display departments
@@ -416,7 +455,7 @@ function budgetDisplay() {
 }
 
 function empDisplaySelect() {
-  inquirer.prompt(questions[11]).then((data) => {
+  inquirer.prompt(questions[7]).then((data) => {
     switch (data.empDispChoice) {
       case "By ID":
         employeeDisplay();
