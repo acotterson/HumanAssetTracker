@@ -128,13 +128,41 @@ ORDER BY e.id;`;
     })
 }
 
+// Add new employee
+function employeeAdd() {}
+
+// Update employee
+function employeeUpdate() {}
+
+// Delete employee
+function employeeDelete() {}
+
 // Display roles
 function roleDisplay() {
-  //   SELECT r.id, r.title, d.name AS department, r.salary
-  // FROM `role` r
-  // LEFT JOIN department d ON r.department_id = d.id;
-  main();
+  const sql = `SELECT r.id, r.title, d.name AS department, r.salary
+  FROM role r
+  LEFT JOIN department d ON r.department_id = d.id;`;
+db.promise()
+  .query(sql)
+  .then(([row, fields]) => {
+    console.table(row);
+    main();
+  })
+  .catch((err) => {
+    console.log(err);
+  })
 }
+
+// Add new role
+function roleAdd() {}
+
+// Update role
+function roleUpdate() {}
+
+// Delete role
+function roleDelete() {}
+
+
 
 // Display departments
 function departmentDisplay() {
@@ -149,6 +177,12 @@ function departmentDisplay() {
       console.log(err);
     })
 }
+
+// Add new department
+function departmentAdd() {}
+
+// Delete department
+function departmentDelete() {}
 
 // Display employees by manager
 function employeeManDisplay() {
@@ -248,30 +282,6 @@ function main() {
         console.log("Goodbye!");
         return false;
     }
-    // if (data.mMenuChoice === mMenu[0]) {
-    //   console.log(0);
-    //   employeeDisplay();
-    // } else if (data.mMenuChoice === mMenu[1]) {
-    //   console.log(1);
-    // } else if (data.mMenuChoice === mMenu[2]) {
-    //   console.log(2);
-    // } else if (data.mMenuChoice === mMenu[3]) {
-    //   console.log(3);
-    // } else if (data.mMenuChoice === mMenu[4]) {
-    //   console.log(4);
-    // } else if (data.mMenuChoice === mMenu[5]) {
-    //   console.log(5);
-    //   departmentDisplay();
-    // } else if (data.mMenuChoice === mMenu[6]) {
-    //   console.log(6);
-    // } else if (data.mMenuChoice === mMenu[7]) {
-    //   console.log(7);
-    //   budgetDisplay();
-    // } else {
-    //   console.log("Error.");
-    // }
-
-    // fulfillReq(team, data.teamAdd);
   });
 }
 
