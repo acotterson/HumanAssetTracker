@@ -26,7 +26,7 @@ const mMenu = [
   "Delete Employee",
   "View All Roles",
   "Add Role",
-  "Update Role",
+  "Update Role Salary",
   "Delete Role",
   "View All Departments",
   "Add Department",
@@ -127,7 +127,7 @@ function employeeAdd() {
           questions[4].message = "What is the employee's role?";
           // get role of employee
           inquirer.prompt(questions[4]).then((roleData) => {
-            // match department name to department id from last query
+            // match role name to role id from last query
             params.push(
               row1.filter((el) => el.title === roleData.choice)[0].id
             );
@@ -154,7 +154,10 @@ function employeeAdd() {
                         console.log("Employee not added.");
                       } else {
                         console.log(
-                          params[0] + ' ' + params[1] + " added to the database."
+                          params[0] +
+                            " " +
+                            params[1] +
+                            " added to the database."
                         );
                       }
                       main();
@@ -176,8 +179,158 @@ function employeeAdd() {
   });
 }
 
-// Update employee
-function employeeUpdate() {}
+// Update employee role
+function employeeUpdate() {
+  const params = [];
+  // get list of available employees
+  const sqlEmp = `SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) as name FROM employee e`;
+  db.promise()
+    .query(sqlEmp)
+    .then(([row1, fields]) => {
+      // modify question based on available employees and to indicate update
+      questions[4].choices = row1.map((x) => x.name);
+      questions[4].message = "Which employee do you want to update?";
+      // ask which employee to update
+      inquirer.prompt(questions[4]).then((empData) => {
+        questions[4].choices = ["Role", "Manager"];
+        questions[4].message = "What do you want to update?";
+        inquirer.prompt(questions[4]).then((updateChoice) => {
+          if (updateChoice.choice === "Role") {
+            const sqlUpdate = `UPDATE employee SET role_id = ? WHERE id = ?`;
+            // query db to get role options
+            const sqlRole = `SELECT r.id, r.title FROM role r`;
+            db.promise()
+              .query(sqlRole)
+              .then(([row2, fields]) => {
+                // modify question based on available roles and to ask the correct question
+                questions[4].choices = row2.map((x) => x.title);
+                questions[4].message = "What is the employee's new title?";
+                // get new role of employee
+                inquirer
+                  .prompt(questions[4])
+                  .then((roleData) => {
+                    // match role name to role id from last query
+                    params.push(
+                      row2.filter((el) => el.title === roleData.choice)[0].id
+                    );
+                    // employee name
+                    params.push(
+                      row1.filter((el) => el.name === empData.choice)[0].id
+                    );
+                    // update the employee
+                    db.promise()
+                      .query(sqlUpdate, params)
+                      .then(([row3, fields]) => {
+                        if (!row3.affectedRows) {
+                          console.log("Employee not updated.");
+                        } else {
+                          console.log(empData.choice + " updated.");
+                        }
+                        main();
+                      })
+                      .catch((err) => {
+                        console.log(err);
+                      });
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+              });
+          } else {
+            const sqlUpdate = `UPDATE employee SET manager_id = ? WHERE id = ?`;
+            // query db to get manager options
+            const sqlMan = `SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) as name FROM employee e`;
+            db.promise()
+              .query(sqlMan)
+              .then(([row2, fields]) => {
+                // modify question based on available managers and to ask the correct question
+                questions[4].choices = row2.map((x) => x.name);
+                questions[4].message = "Who is the employee's new manager?";
+                // get manager of employee
+                inquirer
+                  .prompt(questions[4])
+                  .then((manData) => {
+                    // match manager name to manager id from last query
+                    params.push(
+                      row2.filter((el) => el.name === manData.choice)[0].id
+                    );
+                    // employee name
+                    params.push(
+                      row1.filter((el) => el.name === empData.choice)[0].id
+                    );
+                    // update the employee
+                    db.promise()
+                      .query(sqlUpdate, params)
+                      .then(([row3, fields]) => {
+                        if (!row3.affectedRows) {
+                          console.log("Employee not updated.");
+                        } else {
+                          console.log(empData.choice + " updated.");
+                        }
+                        main();
+                      })
+                      .catch((err) => {
+                        console.log(err);
+                      });
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+              });
+          }
+        });
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
+
+// Update role salary
+function roleUpdate() {
+  const params = [];
+  const sqlUpdate = `UPDATE role SET salary = ? WHERE id = ?`;
+  // query db to get role options
+  const sqlRole = `SELECT r.id, r.title FROM role r`;
+  db.promise()
+    .query(sqlRole)
+    .then(([row1, fields]) => {
+      // modify question based on available roles and to ask the correct question
+      questions[4].choices = row1.map((x) => x.title);
+      questions[4].message = "Which role do you want to update?";
+      // get role to update
+      inquirer
+        .prompt(questions[4])
+        .then((roleData) => {
+          // get role new salary
+          inquirer.prompt(questions[3]).then((salData) => {
+            // match role name to role id from last query
+            params.push(salData.roleSalary);
+            // employee name
+            params.push(
+              row1.filter((el) => el.title === roleData.choice)[0].id
+            );
+            // update the employee
+            db.promise()
+              .query(sqlUpdate, params)
+              .then(([row2, fields]) => {
+                if (!row2.affectedRows) {
+                  console.log("Role not updated.");
+                } else {
+                  console.log(roleData.choice + " updated.");
+                }
+                main();
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
+}
 
 // Delete employee
 function employeeDelete() {
@@ -274,9 +427,6 @@ function roleAdd() {
     });
   });
 }
-
-// Update role
-function roleUpdate() {}
 
 // Delete role
 function roleDelete() {
@@ -495,7 +645,7 @@ function main() {
       case "Add Role":
         roleAdd();
         break;
-      case "Update Role":
+      case "Update Role Salary":
         roleUpdate();
         break;
       case "Delete Role":
