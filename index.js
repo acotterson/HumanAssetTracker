@@ -62,7 +62,7 @@ const questions = [
   {
     type: "list",
     message: "",
-    name: "depChoice",
+    name: "choice",
     choices: [],
   },
   {
@@ -139,7 +139,39 @@ function employeeAdd() {}
 function employeeUpdate() {}
 
 // Delete employee
-function employeeDelete() {}
+function employeeDelete() {
+    // get list of available employees
+    const sql = `SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) as name FROM employee e`;
+    db.promise()
+      .query(sql)
+      .then(([row, fields]) => {
+        // modify question based on available employees and to indicate deletion
+        questions[4].choices = row.map((x) => x.name);
+        questions[4].message = "Which employee do you want to delete?";
+        // ask which employee to delete
+        inquirer.prompt(questions[4]).then((data) => {
+          // use query to delete selected employee using name selected
+          const sql = `DELETE FROM employee WHERE id = ?`;
+          const params = (row.filter(el => el.name === data.choice))[0].id;
+          db.promise()
+            .query(sql, params)
+            .then(([row, fields]) => {
+              if (!row.affectedRows) {
+                console.log("Employee not found");
+              } else {
+                console.log(data.choice + " deleted from the database.");
+              }
+              main();
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+}
 
 // Display roles
 function roleDisplay() {
@@ -160,22 +192,28 @@ function roleDisplay() {
 // Add new role
 function roleAdd() {
   const params = [];
+  // get name of role
   inquirer.prompt(questions[2]).then((nameData) => {
     console.log(nameData.roleName);
     params.push(nameData.roleName);
+    // get salary of role
     inquirer.prompt(questions[3]).then((salData) => {
       console.log(salData.roleSalary);
       params.push(salData.roleSalary);
+      // query db to get department options
       const sql1 = `SELECT * FROM department`;
       db.promise()
         .query(sql1)
         .then(([row1, fields]) => {
-          console.log(row1);
+          // modify question based on available departments and to ask the correct question
           questions[4].choices = row1.map((x) => x.name);
           questions[4].message = "Which department does the role belong to?";
+          // get department of role
           inquirer.prompt(questions[4]).then((depData) => {
             const sql2 = `INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`;
-            params.push((row1.filter(el => el.name === depData.depChoice))[0].id);
+            // match department name to department id from last query
+            params.push((row1.filter(el => el.name === depData.choice))[0].id);
+            // add the new role
             db.promise()
               .query(sql2, params)
               .then(([row2, fields]) => {
@@ -202,7 +240,39 @@ function roleAdd() {
 function roleUpdate() {}
 
 // Delete role
-function roleDelete() {}
+function roleDelete() {
+    // get list of available departments
+    const sql = `SELECT d.name AS department FROM department d`;
+    db.promise()
+      .query(sql)
+      .then(([row, fields]) => {
+        // modify question based on available departments and to indicate deletion
+        questions[4].choices = row.map((x) => x.department);
+        questions[4].message = "Which department do you want to delete?";
+        // ask which department to delete
+        inquirer.prompt(questions[4]).then((data) => {
+          // use query to delete selected department using name selected
+          const sql = `DELETE FROM department WHERE name = ?`;
+          const params = data.choice;
+          db.promise()
+            .query(sql, params)
+            .then(([row, fields]) => {
+              if (!row.affectedRows) {
+                console.log("Department not found");
+              } else {
+                console.log(data.choice + " deleted from the database.");
+              }
+              main();
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+}
 
 // Display departments
 function departmentDisplay() {
@@ -220,8 +290,9 @@ function departmentDisplay() {
 
 // Add new department
 function departmentAdd() {
+  // get the department
   inquirer.prompt(questions[1]).then((data) => {
-    console.log(data.depName);
+    // use query to add the department
     const sql = `INSERT INTO department (name) VALUES (?)`;
     const params = data.depName;
     db.promise()
@@ -242,27 +313,26 @@ function departmentAdd() {
 
 // Delete department
 function departmentDelete() {
+  // get list of available departments
   const sql = `SELECT d.name AS department FROM department d`;
   db.promise()
     .query(sql)
     .then(([row, fields]) => {
-      let deps = row.map((x) => x.department);
-      console.log(deps);
-      console.log(questions[4]);
-      questions[4].choices = deps;
+      // modify question based on available departments and to indicate deletion
+      questions[4].choices = row.map((x) => x.department);
       questions[4].message = "Which department do you want to delete?";
-      console.log(questions[4]);
+      // ask which department to delete
       inquirer.prompt(questions[4]).then((data) => {
-        console.log(data.depChoice);
+        // use query to delete selected department using name selected
         const sql = `DELETE FROM department WHERE name = ?`;
-        const params = data.depChoice;
+        const params = data.choice;
         db.promise()
           .query(sql, params)
           .then(([row, fields]) => {
             if (!row.affectedRows) {
               console.log("Department not found");
             } else {
-              console.log(data.depChoice + " deleted from the database.");
+              console.log(data.choice + " deleted from the database.");
             }
             main();
           })
@@ -347,7 +417,6 @@ function budgetDisplay() {
 
 function empDisplaySelect() {
   inquirer.prompt(questions[11]).then((data) => {
-    console.log(data.empDispChoice);
     switch (data.empDispChoice) {
       case "By ID":
         employeeDisplay();
@@ -368,7 +437,6 @@ function empDisplaySelect() {
 // Accept user requests at main menu
 function main() {
   inquirer.prompt(questions[0]).then((data) => {
-    console.log(data.mMenuChoice);
     switch (data.mMenuChoice) {
       case "View All Employees":
         empDisplaySelect();
@@ -396,7 +464,7 @@ function main() {
         break;
       case "View All Departments":
         departmentDisplay();
-        return true;
+        break;
       case "Add Department":
         departmentAdd();
         break;
@@ -409,7 +477,7 @@ function main() {
       default:
         db.end();
         console.log("Goodbye!");
-        return false;
+        break;
     }
   });
 }
