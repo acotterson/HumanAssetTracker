@@ -30,7 +30,8 @@ You may add departments, roles, and employees by following the given prompts. Yo
 
 [Video Link of Usage](https://drive.google.com/file/d/1x4Gf5DlQOY4okppMlyFFFLgsNuLeLjIk/view)
 
-[HumanAssetTrackerResized.webm](https://user-images.githubusercontent.com/35825121/190838260-7d947901-e43d-4bf8-ac8d-39311aa89681.webm)
+
+[HumanAssetTrackerResized2x.webm](https://user-images.githubusercontent.com/35825121/190838425-401ee98a-48e5-4f79-82e0-48eeae092933.webm)
 
 
 ## Questions
