@@ -4,7 +4,7 @@
 
 ## Description
 
-This application will allow the user to build out their work team and have a visual representation with links and information via HTML.
+This application will allow the user to manage and track their company structure where it involves employees.
 
 ## Table of Contents
 
